@@ -1,49 +1,83 @@
-from __future__ import print_function
-import os.path
-import cv2
+import pickle
+import os
+from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
 
-# If modifying these scopes, delete the file token.json.
-SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
+import io
 
-def main():
-    """Shows basic usage of the Drive v3 API.
-    Prints the names and ids of the first 10 files the user has access to.
-    """
-    creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+scopes = ['https://www.googleapis.com/auth/drive']
+def Create_Service(client_secret_file, api_name, api_version, *scopes):
+    print(client_secret_file, api_name, api_version, scopes, sep='-')
+    CLIENT_SECRET_FILE = client_secret_file
+    API_SERVICE_NAME = api_name
+    API_VERSION = api_version
+    SCOPES = [scope for scope in scopes[0]]
+    print(SCOPES)
+
+    cred = None
+
+    pickle_file = f'token_{API_SERVICE_NAME}_{API_VERSION}.pickle'
+    # print(pickle_file)
+
+    if os.path.exists(pickle_file):
+        with open(pickle_file, 'rb') as token:
+            cred = pickle.load(token)
+
+    if not cred or not cred.valid:
+        if cred and cred.expired and cred.refresh_token:
+            cred.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
+            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+            cred = flow.run_local_server()
 
-    service = build('drive', 'v3', credentials=creds)
+        with open(pickle_file, 'wb') as token:
+            pickle.dump(cred, token)
 
-    # Call the Drive v3 API
-    results = service.files().list(
-        pageSize=10, fields="nextPageToken, files(id, name)").execute()
-    items = results.get('files', [])
+    try:
+        service = build(API_SERVICE_NAME, API_VERSION, credentials=cred)
+        print(API_SERVICE_NAME, 'service created successfully')
+        
+    except Exception as e:
+        print('Unable to connect.')
+        print(e)
+        return None
+    
+    # page_token = None
+    # while True:
+        
+    #     response = service.files().list(q="not name contains 'hello'",
+    #                                         spaces='drive',
+    #                                         fields='nextPageToken, files(id, name)',
+    #                                         pageToken=page_token).execute()
+    #     print (response.get('files', []))
+    #     for file in response.get('files', []):
+    #         # Process change
+    #         print ('Found file: {0} ({1})'.format(file.get('name'), file.get('id')))
+    #     page_token = response.get('nextPageToken', None)
+    #     if page_token is None:
+    #         break
+    file_ids = ['1zvsQA9fVHwM9ZStz3y-4sbhfdOEtgy0U']
+    file_names = ['ESP.JPG']
 
-    if not items:
-        print('No files found.')
-    else:
-        print('Files:')
-        for item in items:
-            print(u'{0} ({1})'.format(item['name'], item['id']))
+    for file_id , file_name in zip(file_ids,file_names):
+        request=service.files().get_media(fileId=file_id)
 
-if __name__ == '__main__':
-    main()
+        fh=io.BytesIO()
+        downloader = MediaIoBaseDownload(fd=fh, request=request)
+
+        done=False
+
+        while not done:
+            status,done = downloader.next_chunk()
+            print('Download progress {0}'.format(status.progress()*100))
+
+        fh.seek(0)
+        with open(os.path.join('./images',file_name),'wb') as f:
+            f.write(fh.read())
+            f.close()
+    return service        
+
+
+Create_Service('credentials.json' ,'drive' , 'v3' , scopes)
