@@ -44,39 +44,41 @@ def Create_Service(client_secret_file, api_name, api_version, *scopes):
         print(e)
         return None
     
-    # page_token = None
-    # while True:
-        
-    #     response = service.files().list(q="not name contains 'hello'",
-    #                                         spaces='drive',
-    #                                         fields='nextPageToken, files(id, name)',
-    #                                         pageToken=page_token).execute()
-    #     print (response.get('files', []))
-    #     for file in response.get('files', []):
-    #         # Process change
-    #         print ('Found file: {0} ({1})'.format(file.get('name'), file.get('id')))
-    #     page_token = response.get('nextPageToken', None)
-    #     if page_token is None:
-    #         break
-    file_ids = ['1zvsQA9fVHwM9ZStz3y-4sbhfdOEtgy0U']
-    file_names = ['ESP.JPG']
 
-    for file_id , file_name in zip(file_ids,file_names):
-        request=service.files().get_media(fileId=file_id)
 
-        fh=io.BytesIO()
-        downloader = MediaIoBaseDownload(fd=fh, request=request)
 
-        done=False
+    text_file_id = '1M1_8Zl8C4s6Yo9LVnPIvO1ZAOpfqYa9H'
+    text_file_name = 'INFO.TXT'    
+    request=service.files().get_media(fileId=text_file_id)
+    fh=io.BytesIO()
+    downloader = MediaIoBaseDownload(fd=fh, request=request)
+    done=False
+    while not done:
+        status,done = downloader.next_chunk()
+        print('Downloading text file {0}'.format(status.progress()*100))
 
-        while not done:
-            status,done = downloader.next_chunk()
-            print('Download progress {0}'.format(status.progress()*100))
+    fh.seek(0)
+    # print("this is the data " + str(fh.read()))
+    fh = str(fh.read())
+    fh = fh[2:fh.__len__()-1] #string slicing
+    #print(fh)
+    file_id = fh
+    file_name = 'ESP.JPG'    
+    request=service.files().get_media(fileId=file_id)
 
-        fh.seek(0)
-        with open(os.path.join('./images',file_name),'wb') as f:
-            f.write(fh.read())
-            f.close()
+    fh=io.BytesIO()
+    downloader = MediaIoBaseDownload(fd=fh, request=request)
+
+    done=False
+
+    while not done:
+        status,done = downloader.next_chunk()
+        print('Downloading image {0}'.format(status.progress()*100))
+
+    fh.seek(0)
+    with open(os.path.join('./images',file_name),'wb') as f:
+        f.write(fh.read())
+        f.close()
     return service        
 
 
