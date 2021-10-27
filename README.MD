@@ -10,6 +10,17 @@ To install all the neccessary requirements run the following commands
 pip install -r requirements.txt
 ```
 
+## Setting up the virtual environment
+
+> It is recommended to setup a virtual environment and then run the program
+
+```
+py -m pip venv ./venv  #creating virtual environment
+venv\Scripts\activate  #to activate the environment after creation
+pip install -r requirements.txt # for installation of libraries
+
+```
+
 ## For running the program
 
 Run the main.py file using
