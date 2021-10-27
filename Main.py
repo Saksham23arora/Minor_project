@@ -8,7 +8,7 @@ from google.auth.transport.requests import Request
 import io
 
 scopes = ['https://www.googleapis.com/auth/drive']
-def Create_Service(client_secret_file, api_name, api_version, *scopes):
+def get_image(client_secret_file, api_name, api_version, *scopes):
     print(client_secret_file, api_name, api_version, scopes, sep='-')
     CLIENT_SECRET_FILE = client_secret_file
     API_SERVICE_NAME = api_name
@@ -80,5 +80,5 @@ def Create_Service(client_secret_file, api_name, api_version, *scopes):
         f.close()
     return service        
 
-
-Create_Service('credentials.json' ,'drive' , 'v3' , scopes)
+if __name__ == '__main__':
+    get_image('credentials.json' ,'drive' , 'v3' , scopes)
