@@ -54,7 +54,7 @@ def get_image(client_secret_file, api_name, api_version, *scopes):
     done=False
     while not done:
         status,done = downloader.next_chunk()
-        print('Downloading text file {0}'.format(status.progress()*100))
+        print('Downloading ID of image {0}'.format(status.progress()*100))
 
     fh.seek(0)
     # print("this is the data " + str(fh.read()))
@@ -79,6 +79,10 @@ def get_image(client_secret_file, api_name, api_version, *scopes):
         f.write(fh.read())
         f.close()
     return service        
+
+def image_detection():
+    pass
+
 
 if __name__ == '__main__':
     get_image('credentials.json' ,'drive' , 'v3' , scopes)

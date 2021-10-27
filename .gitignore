@@ -2,3 +2,4 @@ esp_32_GDRIVE/credential.h
 credentials.json
 token.json
 token_drive_v3.pickle
+venv/
