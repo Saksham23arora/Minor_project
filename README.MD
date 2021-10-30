@@ -36,3 +36,9 @@ python main.py
 1. Firstly the `get_image()` function is called which downloades the latest meter reading image from Google drive (uploaded by ESP-32 microcontroller) and places the image in the images folder with name ESP.jpg
 2. Then the `image_detection()` function is called which uses the open-cv library to do edge detection and returns a cropped image with just the reading
 3. This cropped image is then passed to the `number_detection()` function which uses the [EasyOCR](https://github.com/JaidedAI/EasyOCR) library to detect the reading and convert the reading into a string.
+
+### Issues
+
+- [x] Get image from google drive
+- [ ] Fix the working of `image_detection()` and `number_detection()` functions
+

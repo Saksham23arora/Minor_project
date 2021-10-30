@@ -1,5 +1,6 @@
 import pickle
 import os
+from PIL.Image import new
 from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
@@ -88,15 +89,18 @@ def get_image(client_secret_file, api_name, api_version, *scopes):
 
 def image_detection():
     img = cv2.imread('images/ESP.JPG')
-    # img = cv2.rotate(img ,cv2.ROTATE_180)
-    cv2.imshow('Captured image', img)
+    img = cv2.rotate(img, cv2.ROTATE_180)
+    #cv2.imshow('Captured image', img) # show the captured image
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
+    #gray = cv2.GaussianBlur(gray , (3,3), cv2.BORDER_DEFAULT)
+    cv2.imshow('GrayScale image', gray) # show the grayscale version of image
     bfilter = cv2.bilateralFilter(gray, 11, 17, 17)
-    edged = cv2.Canny(bfilter, 30, 200)
-    plt.imshow(cv2.cvtColor(edged, cv2.COLOR_BGR2RGB))
-    plt.show()
+    edged = cv2.Canny(bfilter, 125, 175)
+    edged = cv2.dilate(edged,(3,3),iterations=2)
+    edged = cv2.erode(edged,(3,3),iterations=2)
+    cv2.imshow('Filtered Image', edged)
     # image gray conversion and filtering
+
     keypoints = cv2.findContours(
         edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contours = imutils.grab_contours(keypoints)
@@ -120,13 +124,13 @@ def image_detection():
         (x1, y1) = (np.min(x), np.min(y))
         (x2, y2) = (np.max(x), np.max(y))
         cropped_image = gray[x1:x2+1, y1:y2+1]
-        # why isnt this image grayscale?
-        plt.imshow(cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB))
-        plt.show()
+        cv2.imshow('Cropped Image', new_image)
+
         res = cv2.rectangle(img, tuple(location[0][0]), tuple(
-            location[2][0]), (150, 0, 255), 3)  # BGR
-        plt.imshow(cv2.cvtColor(res, cv2.COLOR_BGR2RGB))
-        plt.show()
+            location[2][0]), (0, 255, 0), 3)  # BGR
+        cv2.imshow('Result', res)
+        cv2.imwrite('images/result.jpg', res)  # save the captured image
+        cv2.waitKey(0)  # the code wont move forward until windows closed
     else:
         print('no contour found')
     return cropped_image
