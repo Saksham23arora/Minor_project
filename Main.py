@@ -15,6 +15,55 @@ import easyocr
 
 scopes = ['https://www.googleapis.com/auth/drive']
 
+def calculate_bill(old_reading, new_reading):
+    connected_load = 5000
+
+    meter_mul = 1.0
+    line_ct = 100/5
+    meter_ct = 50/5
+
+    overall_mul = meter_mul*line_ct/meter_ct;
+
+    unit_consumed = overall_mul*(new_reading - old_reading)
+
+    #fixed charges calculation
+    fcharge_per_kw = 35
+    days_per_cycle = 30
+    fix_charges = (connected_load/1000)*0.8*days_per_cycle*fcharge_per_kw*12/365
+
+    #variable charges
+    var_charge = 0
+    rate_units_less_than_100 = 4.49 #rate for units less than 100
+    rate_units_less_than_300 = 6.34 #rate for units less than 100
+    rate_above_300 = 7.3
+    if unit_consumed <= 100:
+        var_charge += unit_consumed*rate_units_less_than_100
+    elif unit_consumed <= 300:
+        var_charge += 100*rate_units_less_than_100
+        var_charge += (unit_consumed - 100)*rate_units_less_than_100
+    else:
+        var_charge += 100*rate_units_less_than_100
+        var_charge += 200*rate_units_less_than_300
+        var_charge += (unit_consumed - 300)*rate_above_300
+
+    rent = 20 #meter rent
+
+    #other dependent charges
+    electricity_duty = (fix_charges + var_charge + rent)*0.15;
+    idf = (fix_charges + var_charge + rent)*0.05;
+    MC_tax = (fix_charges + var_charge + rent)*0.02;
+    cow_cess = unit_consumed*0.02
+
+    total = fix_charges + var_charge + rent + electricity_duty + idf + MC_tax + cow_cess
+
+    surcharge = 1.02*total
+
+    print("Bill value if paid in time")
+    print(total)
+    print("Bill value after surcharge")
+    print(surcharge)
+
+
 
 def get_image(client_secret_file, api_name, api_version, *scopes):
     print(client_secret_file, api_name, api_version, scopes, sep='-')
