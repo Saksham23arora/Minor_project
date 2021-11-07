@@ -14,27 +14,39 @@ import imutils
 import easyocr
 
 scopes = ['https://www.googleapis.com/auth/drive']
+text_id = '1M1_8Zl8C4s6Yo9LVnPIvO1ZAOpfqYa9H'
 
-def calculate_bill(old_reading, new_reading):
+
+def calculate_bill(old_reading: int, new_reading: int):
+    '''This function calculates the bill according to the guide lines of PSPCL
+
+    Paramters :
+        old and new kilo watt hour reading
+
+    Returns :
+        the bill amount
+
+    '''
     connected_load = 5000
 
     meter_mul = 1.0
     line_ct = 100/5
     meter_ct = 50/5
 
-    overall_mul = meter_mul*line_ct/meter_ct;
+    overall_mul = meter_mul*line_ct/meter_ct
 
     unit_consumed = overall_mul*(new_reading - old_reading)
 
-    #fixed charges calculation
+    # fixed charges calculation
     fcharge_per_kw = 35
     days_per_cycle = 30
-    fix_charges = (connected_load/1000)*0.8*days_per_cycle*fcharge_per_kw*12/365
+    fix_charges = (connected_load/1000)*0.8 * \
+        days_per_cycle*fcharge_per_kw*12/365
 
-    #variable charges
+    # variable charges
     var_charge = 0
-    rate_units_less_than_100 = 4.49 #rate for units less than 100
-    rate_units_less_than_300 = 6.34 #rate for units less than 100
+    rate_units_less_than_100 = 4.49  # rate for units less than 100
+    rate_units_less_than_300 = 6.34  # rate for units less than 100
     rate_above_300 = 7.3
     if unit_consumed <= 100:
         var_charge += unit_consumed*rate_units_less_than_100
@@ -46,15 +58,16 @@ def calculate_bill(old_reading, new_reading):
         var_charge += 200*rate_units_less_than_300
         var_charge += (unit_consumed - 300)*rate_above_300
 
-    rent = 20 #meter rent
+    rent = 20  # meter rent
 
-    #other dependent charges
-    electricity_duty = (fix_charges + var_charge + rent)*0.15;
-    idf = (fix_charges + var_charge + rent)*0.05;
-    MC_tax = (fix_charges + var_charge + rent)*0.02;
+    # other dependent charges
+    electricity_duty = (fix_charges + var_charge + rent)*0.15
+    idf = (fix_charges + var_charge + rent)*0.05
+    MC_tax = (fix_charges + var_charge + rent)*0.02
     cow_cess = unit_consumed*0.02
 
-    total = fix_charges + var_charge + rent + electricity_duty + idf + MC_tax + cow_cess
+    total = fix_charges + var_charge + rent + \
+        electricity_duty + idf + MC_tax + cow_cess
 
     surcharge = 1.02*total
 
@@ -62,11 +75,25 @@ def calculate_bill(old_reading, new_reading):
     print(total)
     print("Bill value after surcharge")
     print(surcharge)
+    return total
 
 
+def get_image(client_secret_file, api_name, api_version, text_file_id, *scopes):
+    '''This function downloads the image from the google drive
+       and also sets up the drive accesss
 
-def get_image(client_secret_file, api_name, api_version, *scopes):
-    print(client_secret_file, api_name, api_version, scopes, sep='-')
+    Paramters :
+        client_secret_file
+        api_name
+        api_version
+        scopes
+        text_file_id   
+
+    Returns :
+        a downloaded image in images folder ith name ESP.JPG
+
+    '''
+    #print(client_secret_file, api_name, api_version, scopes, sep='-')
     CLIENT_SECRET_FILE = client_secret_file
     API_SERVICE_NAME = api_name
     API_VERSION = api_version
@@ -102,7 +129,6 @@ def get_image(client_secret_file, api_name, api_version, *scopes):
         print(e)
         return None
 
-    text_file_id = '1M1_8Zl8C4s6Yo9LVnPIvO1ZAOpfqYa9H'
     request = service.files().get_media(fileId=text_file_id)
     fh = io.BytesIO()
     downloader = MediaIoBaseDownload(fd=fh, request=request)
@@ -137,16 +163,26 @@ def get_image(client_secret_file, api_name, api_version, *scopes):
 
 
 def image_detection():
+    '''This function takes the image in the images folder amd then applies counter detection and returns the cropped image
+
+        Paramters :
+            none
+
+        Returns :
+            cv2 image object which has the 
+            cropped image
+
+    '''
     img = cv2.imread('images/ESP.JPG')
     img = cv2.rotate(img, cv2.ROTATE_180)
-    #cv2.imshow('Captured image', img) # show the captured image
+    # cv2.imshow('Captured image', img) # show the captured image
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     #gray = cv2.GaussianBlur(gray , (3,3), cv2.BORDER_DEFAULT)
-    cv2.imshow('GrayScale image', gray) # show the grayscale version of image
+    cv2.imshow('GrayScale image', gray)  # show the grayscale version of image
     bfilter = cv2.bilateralFilter(gray, 11, 17, 17)
     edged = cv2.Canny(bfilter, 125, 175)
-    edged = cv2.dilate(edged,(3,3),iterations=2)
-    edged = cv2.erode(edged,(3,3),iterations=2)
+    edged = cv2.dilate(edged, (3, 3), iterations=2)
+    edged = cv2.erode(edged, (3, 3), iterations=2)
     cv2.imshow('Filtered Image', edged)
     # image gray conversion and filtering
 
@@ -197,5 +233,5 @@ def number_detection(image):
 
 
 if __name__ == '__main__':
-    #get_image('credentials.json' ,'drive' , 'v3' , scopes)
-    print(number_detection(image_detection()))
+    get_image('credentials.json', 'drive', 'v3', text_id, scopes)
+    # print(number_detection(image_detection()))

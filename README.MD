@@ -40,5 +40,5 @@ python main.py
 ### Issues
 
 - [x] Get image from google drive
-- [ ] Fix the working of `image_detection()` and `number_detection()` functions
-
+- [ ] Fix the working of `image_detection()` and `number_detection()` functions -[ ] add minimum area parameter
+- [x] add doc string for every function
