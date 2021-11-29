@@ -12,6 +12,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import imutils
 import easyocr
+from databa import *
 
 scopes = ['https://www.googleapis.com/auth/drive']
 text_id = '1M1_8Zl8C4s6Yo9LVnPIvO1ZAOpfqYa9H'
