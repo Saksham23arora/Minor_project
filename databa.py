@@ -54,7 +54,15 @@ def save_values(abc: dict) -> None:
 
 
 def get_values(abc: dict) -> dict:
-    my_data = [] 
+    '''
+    This function will get the values from the database file 
+
+    parameters = dict ['id': str]
+
+    returns : fully populated dictionary
+    '''
+    my_data = []
+    found - False
     with open('database.csv', mode='r', newline='') as csvfile:
         csvreader = csv.reader(csvfile)
         my_data = list(csvreader)
@@ -71,9 +79,15 @@ def get_values(abc: dict) -> dict:
                 break
         except IndexError:
             pass
+    if not found:
+        print('Non existent customer')
+        abc['last_reading'] = 'NA'
+        abc['current_reading'] = 'NA'
+        abc['due_amount'] = 'NA'
+
     return abc
 
 
 if __name__ == '__main__':
-    #save_values(current_Values)
+    # save_values(current_Values)
     print(get_values({'id': 'blah'}))
