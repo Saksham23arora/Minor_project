@@ -38,10 +38,12 @@ def logout():
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def sign_up():
     if request.method == 'POST':
-        email = request.form.get('email')
+        email = request.form.get('email') # corresponding to name tags
         first_name = request.form.get('firstName')
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
+        Esp_id = request.form.get('Esp_id')
+        Phone_number = request.form.get('Phone_number')
 
         user = User.query.filter_by(email=email).first()
         if user:
@@ -54,9 +56,11 @@ def sign_up():
             flash('Passwords don\'t match.', category='error')
         elif len(password1) < 7:
             flash('Password must be at least 7 characters.', category='error')
+        elif not len(Phone_number) == 13:
+            flash('Phone Number must be of 13 characters (Including Country Code)')
         else:
             new_user = User(email=email, first_name=first_name, password=generate_password_hash(
-                password1, method='sha256'))
+                password1, method='sha256') , last_reading = 0 , current_reading = 0 , amount = 0 , text_id = Esp_id , Phone_number = Phone_number)
             db.session.add(new_user)
             db.session.commit()
             login_user(new_user, remember=True)

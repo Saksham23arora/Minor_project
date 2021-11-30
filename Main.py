@@ -12,13 +12,22 @@ from matplotlib import pyplot as plt
 import numpy as np
 import imutils
 import easyocr
-from databa import *
+from sqlalchemy.sql.functions import user
+import user_website
+import SMS
+
+from threading import Thread
+
+
+ 
+
+
 
 scopes = ['https://www.googleapis.com/auth/drive']
-text_id = '1M1_8Zl8C4s6Yo9LVnPIvO1ZAOpfqYa9H'
+#text_id = '1M1_8Zl8C4s6Yo9LVnPIvO1ZAOpfqYa9H'
 
 
-def calculate_bill(old_reading: int, new_reading: int):
+def calculate_bill(old_reading: int, new_reading: int) -> int:
     '''This function calculates the bill according to the guide lines of PSPCL
 
     Paramters :
@@ -163,76 +172,95 @@ def get_image(client_secret_file, api_name, api_version, text_file_id, *scopes):
     return service
 
 
-def image_detection():
-    '''This function takes the image in the images folder amd then applies counter detection and returns the cropped image
+# def image_detection():
+#     '''This function takes the image in the images folder amd then applies counter detection and returns the cropped image
 
-        Paramters :
-            none
+#         Paramters :
+#             none
 
-        Returns :
-            cv2 image object which has the 
-            cropped image
+#         Returns :
+#             cv2 image object which has the 
+#             cropped image
 
-    '''
-    img = cv2.imread('images/ESP.JPG')
-    img = cv2.rotate(img, cv2.ROTATE_180)
-    # cv2.imshow('Captured image', img) # show the captured image
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    #gray = cv2.GaussianBlur(gray , (3,3), cv2.BORDER_DEFAULT)
-    cv2.imshow('GrayScale image', gray)  # show the grayscale version of image
-    bfilter = cv2.bilateralFilter(gray, 11, 17, 17)
-    edged = cv2.Canny(bfilter, 125, 175)
-    edged = cv2.dilate(edged, (3, 3), iterations=2)
-    edged = cv2.erode(edged, (3, 3), iterations=2)
-    cv2.imshow('Filtered Image', edged)
-    # image gray conversion and filtering
+#     '''
+#     img = cv2.imread('images/ESP.JPG')
+#     img = cv2.rotate(img, cv2.ROTATE_180)
+#     # cv2.imshow('Captured image', img) # show the captured image
+#     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#     #gray = cv2.GaussianBlur(gray , (3,3), cv2.BORDER_DEFAULT)
+#     cv2.imshow('GrayScale image', gray)  # show the grayscale version of image
+#     bfilter = cv2.bilateralFilter(gray, 11, 17, 17)
+#     edged = cv2.Canny(bfilter, 125, 175)
+#     edged = cv2.dilate(edged, (3, 3), iterations=2)
+#     edged = cv2.erode(edged, (3, 3), iterations=2)
+#     cv2.imshow('Filtered Image', edged)
+#     # image gray conversion and filtering
 
-    keypoints = cv2.findContours(
-        edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    contours = imutils.grab_contours(keypoints)
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
+#     keypoints = cv2.findContours(
+#         edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+#     contours = imutils.grab_contours(keypoints)
+#     contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
 
-    location = None
-    contour_found = False
-    cropped_image = img
-    for contour in contours:
-        # can be set higher for more rougher approximation
-        approx = cv2.approxPolyDP(contour, 10, True)
-        if len(approx) == 4:
-            location = approx
-            contour_found = True
-            break
-    if contour_found:
-        mask = np.zeros(gray.shape, np.uint8)
-        new_image = cv2.drawContours(mask, [location], 0, 255, -1)
-        new_image = cv2.bitwise_and(img, img, mask=mask)
-        (x, y) = np.where(mask == 255)
-        (x1, y1) = (np.min(x), np.min(y))
-        (x2, y2) = (np.max(x), np.max(y))
-        cropped_image = gray[x1:x2+1, y1:y2+1]
-        cv2.imshow('Cropped Image', new_image)
+#     location = None
+#     contour_found = False
+#     cropped_image = img
+#     for contour in contours:
+#         # can be set higher for more rougher approximation
+#         approx = cv2.approxPolyDP(contour, 10, True)
+#         if len(approx) == 4:
+#             location = approx
+#             contour_found = True
+#             break
+#     if contour_found:
+#         mask = np.zeros(gray.shape, np.uint8)
+#         new_image = cv2.drawContours(mask, [location], 0, 255, -1)
+#         new_image = cv2.bitwise_and(img, img, mask=mask)
+#         (x, y) = np.where(mask == 255)
+#         (x1, y1) = (np.min(x), np.min(y))
+#         (x2, y2) = (np.max(x), np.max(y))
+#         cropped_image = gray[x1:x2+1, y1:y2+1]
+#         cv2.imshow('Cropped Image', new_image)
 
-        res = cv2.rectangle(img, tuple(location[0][0]), tuple(
-            location[2][0]), (0, 255, 0), 3)  # BGR
-        cv2.imshow('Result', res)
-        cv2.imwrite('images/result.jpg', res)  # save the captured image
-        cv2.waitKey(0)  # the code wont move forward until windows closed
-    else:
-        print('no contour found')
-    return cropped_image
-
-
-def number_detection(image):
-    reader = easyocr.Reader(['en'])
-    result = reader.readtext(image)
-    try:
-        number = result[0][-2]
-    except IndexError:
-        print('number not found')
-        number = ''
-    return number
+#         res = cv2.rectangle(img, tuple(location[0][0]), tuple(
+#             location[2][0]), (0, 255, 0), 3)  # BGR
+#         cv2.imshow('Result', res)
+#         cv2.imwrite('images/result.jpg', res)  # save the captured image
+#         cv2.waitKey(0)  # the code wont move forward until windows closed
+#     else:
+#         print('no contour found')
+#     return cropped_image
 
 
+def number_detection():
+    ''' return the current reading of meter that needs to be collected 
+    the image for the user whose reading is to be found will be in the images folder by the name of ESP.jpg'''
+
+    return 100
+
+
+# def myfunc():
+    
+#     user_website.db.session.query(user_website.views.User).get(user_website.views.current_user.id).amount = 87
+#     while True:
+#         pass
+        
 if __name__ == '__main__':
-    get_image('credentials.json', 'drive', 'v3', text_id, scopes)
-    # print(number_detection(image_detection()))
+    # thread = Thread(target = myfunc)
+    # thread.start()
+    # thread.run()
+
+    # open database for every user get esp id , fetch umage , update amount
+    app = user_website.create_app()
+    with app.app_context():
+        for user in user_website.db.session.query(user_website.views.User).all():
+            text_id = user.text_id        
+            get_image('credentials.json', 'drive', 'v3', text_id, scopes)
+            #user.last_reading  = user.current_reading execute this on payment in future
+            user.current_reading = int(number_detection())
+            user.amount = calculate_bill(user.last_reading , user.current_reading)
+
+            SMS.send_sms(user.amount , user.Phone_number , user.first_name)
+        user_website.db.session.commit()
+
+
+    app.run(debug=True)
