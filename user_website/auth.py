@@ -3,6 +3,7 @@ from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
+from sqlalchemy import exc
 
 
 auth = Blueprint('auth', __name__)
@@ -60,9 +61,12 @@ def sign_up():
             flash('Phone Number must be of 13 characters (Including Country Code)')
         else:
             new_user = User(email=email, first_name=first_name, password=generate_password_hash(
-                password1, method='sha256') , last_reading = 0 , current_reading = 0 , amount = 0 , text_id = Esp_id , Phone_number = Phone_number)
-            db.session.add(new_user)
-            db.session.commit()
+                password1, method='sha256') , last_reading = 0 , current_reading = 0 , amount = 0 , text_id = Esp_id , Phone_number = Phone_number , surcharge = 0)
+            try:
+                db.session.add(new_user)
+                db.session.commit()
+            except exc.IntegrityError:
+                print('either text id same or email same')
             login_user(new_user, remember=True)
             flash('Account created!', category='success')
             return redirect(url_for('views.home'))

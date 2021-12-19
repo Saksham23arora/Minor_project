@@ -1,5 +1,6 @@
 {% extends "base.html" %} {% block title %}Home{% endblock %} {% block content
     %}
+    
     <h1 align="center">BILLING SYSTEM</h1>
     
     
@@ -8,13 +9,16 @@
         <h3>
         Your Pending Amount is Rupees  {{data.amount}}
         <br />
-        Your Last Meter Reading was   {{data.last_reading}}
+        Your Last Meter Reading was   {{data.last_reading}} Kwh
         <br />
-        Your Current Reading is   {{data.current_reading}}
+        Your Current Reading is   {{data.current_reading}} Kwh
         <br />
+        <br />
+        Your Surcharge Amount is Rupees  {{data.surcharge}}
         <br />
         <br />
       </h3>
+      <button type="button" class="btn btn-success">Pay</button> <t> <button type="button" class="btn btn-danger">Complaint</button>
       </div>
     
     {% endblock %}

@@ -1,3 +1,4 @@
+from logging import exception
 import pickle
 import os
 from PIL.Image import new
@@ -13,6 +14,7 @@ import numpy as np
 import imutils
 import easyocr
 from sqlalchemy.sql.functions import user
+from sqlalchemy.sql.schema import PrimaryKeyConstraint
 import user_website
 import SMS
 import math
@@ -86,7 +88,7 @@ def calculate_bill(old_reading: int, new_reading: int) -> int:
     print(total)
     print("Bill value after surcharge")
     print(surcharge)
-    return round(total,2)
+    return round(total,2) , round(surcharge , 2)
 
 
 def get_image(client_secret_file, api_name, api_version, text_file_id, *scopes):
@@ -321,8 +323,11 @@ if __name__ == '__main__':
             text_id = user.text_id        
             get_image('credentials.json', 'drive', 'v3', text_id, scopes)
             #user.last_reading  = user.current_reading execute this on payment in future
-            user.current_reading = int(number_detection())
-            user.amount = calculate_bill(user.last_reading , user.current_reading)
+            try:
+                user.current_reading = float(number_detection())
+            except exception as e:
+                print(e)
+            user.amount , user.surcharge = calculate_bill(user.last_reading , user.current_reading)
 
             SMS.send_sms(user.amount , user.Phone_number , user.first_name)
         user_website.db.session.commit()
