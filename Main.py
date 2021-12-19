@@ -15,6 +15,7 @@ import easyocr
 from sqlalchemy.sql.functions import user
 import user_website
 import SMS
+import math
 
 from threading import Thread
 
@@ -172,6 +173,11 @@ def get_image(client_secret_file, api_name, api_version, text_file_id, *scopes):
     return service
 
 
+def outputc(n):
+    out = n/(277611)
+    return out
+
+
 # def image_detection():
 #     '''This function takes the image in the images folder amd then applies counter detection and returns the cropped image
 
@@ -234,8 +240,67 @@ def get_image(client_secret_file, api_name, api_version, text_file_id, *scopes):
 def number_detection():
     ''' return the current reading of meter that needs to be collected 
     the image for the user whose reading is to be found will be in the images folder by the name of ESP.jpg'''
+    path = "./meter_reading_images/"
+    files = [file for file in os.listdir(path) if file.endswith('.png')]
+    print(sorted(files))
+    print(len(files))
 
-    return 100
+    def meter_disp_segment(img_path, debug=True):
+        print(img_path)
+    #     print(type(img_path))
+        imgArr_o = cv2.imread(path + img_path)
+        imgArr = cv2.cvtColor(imgArr_o, cv2.COLOR_BGR2HSV)
+        roi_lower = np.array([40, 25, 0])
+        roi_upper = np.array( [80, 255, 255])
+        mask = cv2.inRange(imgArr, roi_lower, roi_upper)
+        # Bitwise-AND mask and original image
+        imgArr = cv2.bitwise_and(imgArr_o,imgArr_o, mask= mask)
+
+        # Find contours
+        contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
+
+        for cnt in contours:
+            (x, y, w, h) = cv2.boundingRect(cnt)
+            wbuffer = 0.75 * w
+            hbuffer = 0.1 * h
+            imgArr_ext = imgArr_o[y:y + h + int(hbuffer), x:x + w + int(wbuffer)]
+
+            imgArr_ext_gray = cv2.cvtColor(imgArr_ext, cv2.COLOR_BGR2GRAY)
+            imgArr_ext_pp = cv2.adaptiveThreshold(imgArr_ext_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 199, 5)
+            imgArr_ext_pp = cv2.medianBlur(imgArr_ext_pp, 13)
+            cv2.rectangle(imgArr_o, (x, y), (x + w + int(wbuffer), y + h + int(hbuffer)), (255, 0, 255), 10)
+            break
+
+        if debug:
+            cv2.imwrite('./output/meter_disp_ext/' + img_path.split('.')[0] + '_ext.png', imgArr_ext)
+            cv2.imwrite('./output/mask/' + img_path.split('.')[0] + '_mask.png', mask)
+            cv2.imwrite('./output/meter_disp_bb/' + img_path.split('.')[0] + '_bb.png', imgArr_o)
+            cv2.imwrite('./output/meter_disp_ext_pp/' + img_path.split('.')[0] + '_pp.png', imgArr_ext_pp)
+        print(img_path + '--> DONE')
+        
+#         cv2.namedWindow("output", cv2.WINDOW_NORMAL)    # Create window with freedom of dimensions
+        imS = cv2.resize(imgArr_ext_gray, (960, 540))     # Resize image
+        variablee = img_path.split('.')[0]
+        converted_num = int(variablee)
+    #     print(converted_num/10000)
+    #     converted_num1= (math.ceil(converted_num*100)/100)
+#         print("******************")
+#         print(outputc(converted_num))
+        tempVar = outputc(converted_num)
+        return (round(tempVar,1)) 
+
+#         print("******************")
+#         cv2.imshow("output", imS)                       # Show image
+#         cv2.waitKey(0)                                  # Display the image infinitely until any keypress
+
+
+
+    for meter in files:
+        meter_disp_segment(meter)
+
+
+    
 
 
 # def myfunc():
