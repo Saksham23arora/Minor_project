@@ -86,7 +86,7 @@ def calculate_bill(old_reading: int, new_reading: int) -> int:
     print(total)
     print("Bill value after surcharge")
     print(surcharge)
-    return total
+    return round(total,2)
 
 
 def get_image(client_secret_file, api_name, api_version, text_file_id, *scopes):
@@ -240,7 +240,7 @@ def outputc(n):
 def number_detection():
     ''' return the current reading of meter that needs to be collected 
     the image for the user whose reading is to be found will be in the images folder by the name of ESP.jpg'''
-    path = "./meter_reading_images/"
+    path = "./images/"
     files = [file for file in os.listdir(path) if file.endswith('.png')]
     print(sorted(files))
     print(len(files))
@@ -297,7 +297,7 @@ def number_detection():
 
 
     for meter in files:
-        meter_disp_segment(meter)
+        return meter_disp_segment(meter)
 
 
     
